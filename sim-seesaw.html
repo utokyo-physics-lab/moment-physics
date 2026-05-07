@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>シーソーつりあいシミュレーター</title>
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Matter.js for physics simulation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=M+PLUS+Rounded+1c:wght@500;700&display=swap');
+
+        body {
+            font-family: 'Inter', 'M PLUS Rounded 1c', sans-serif;
+            background-color: #f1f5f9;
+            /* tailwind slate-100 */
+        }
+
+        /* Custom range slider styling for better visual feedback */
+        input[type=range] {
+            height: 8px;
+            border-radius: 4px;
+            background: #e2e8f0;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            transition: transform 0.1s;
+        }
+
+        input[type=range]::-webkit-slider-thumb:hover {
+            transform: scale(1.1);
+        }
+
+        #massA::-webkit-slider-thumb,
+        #distA::-webkit-slider-thumb {
+            background: #3b82f6;
+        }
+
+        #massB::-webkit-slider-thumb,
+        #distB::-webkit-slider-thumb {
+            background: #ef4444;
+        }
+
+        input[type=range]:disabled {
+            background: #cbd5e1;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        input[type=range]:disabled::-webkit-slider-thumb {
+            cursor: not-allowed;
+            box-shadow: none;
+            background: #94a3b8;
+        }
+
+        input[type=range]:disabled::-webkit-slider-thumb:hover {
+            transform: none;
+        }
+    </style>
+</head>
+
+<body class="text-slate-800 min-h-screen p-4 md:p-8 flex items-center justify-center">
+
+    <div class="max-w-5xl w-full mx-auto bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-200">
+
+        <!-- Header -->
+        <div class="bg-gradient-to-r from-indigo-600 to-blue-600 text-white p-6 text-center shadow-inner">
+            <h1 class="text-3xl font-extrabold tracking-tight drop-shadow-md">シーソーのつりあいシミュレーター</h1>
+            <p class="mt-2 text-indigo-100 font-medium text-lg">重さ × 距離 ＝ 回転する力（モーメント）</p>
+        </div>
+
+        <!-- Control Bar (Simulation Start/Stop) -->
+        <div
+            class="bg-white border-b border-slate-200 px-6 py-4 flex justify-center items-center gap-4 shadow-sm z-10 relative">
+            <button id="btnStart"
+                class="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-8 rounded-full shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1 flex items-center gap-2 text-lg">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                シミュレーション開始
+            </button>
+            <button id="btnReset"
+                class="hidden bg-slate-500 hover:bg-slate-600 text-white font-bold py-3 px-8 rounded-full shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1 flex items-center gap-2 text-lg">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                実験を止めて設定を変える
+            </button>
+        </div>
+
+        <!-- Canvas Area -->
+        <div class="relative bg-sky-50 border-b border-slate-200 overflow-hidden">
+            <!-- 雲の装飾 -->
+            <div class="absolute top-4 left-10 w-16 h-8 bg-white rounded-full opacity-60 blur-[2px]"></div>
+            <div class="absolute top-8 right-20 w-24 h-10 bg-white rounded-full opacity-70 blur-[2px]"></div>
+
+            <canvas id="simCanvas" width="800" height="500" class="w-full h-auto block touch-none"></canvas>
+
+            <!-- Status Overlay -->
+            <div class="absolute top-6 left-1/2 -translate-x-1/2 bg-white/95 backdrop-blur-sm px-8 py-3 rounded-full shadow-lg border border-slate-200 transition-all duration-300 transform"
+                id="statusContainer">
+                <div id="status" class="text-2xl font-bold tracking-wide text-center">計算中...</div>
+            </div>
+        </div>
+
+        <!-- Control Panel -->
+        <div class="p-6 md:p-8 grid grid-cols-1 md:grid-cols-2 gap-8 bg-slate-50">
+
+            <!-- Left Person (Blue) -->
+            <div class="space-y-6 bg-white p-6 rounded-2xl shadow-sm border-2 border-blue-100 relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-2 h-full bg-blue-500"></div>
+                <div class="flex items-center gap-3 mb-2">
+                    <div class="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center shadow-md">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" viewBox="0 0 20 20"
+                            fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
+                                clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                    <h2 class="text-2xl font-bold text-slate-800">左の人 <span class="text-blue-600 text-lg">A</span></h2>
+                </div>
+
+                <div class="space-y-4">
+                    <div>
+                        <div class="flex justify-between mb-2">
+                            <label class="font-bold text-slate-600">重さ (質量)</label>
+                            <span id="massA_val" class="font-extrabold text-blue-600 text-lg">60 kg</span>
+                        </div>
+                        <input type="range" id="massA" min="10" max="100" step="1" value="60" class="w-full">
+                    </div>
+                    <div>
+                        <div class="flex justify-between mb-2">
+                            <label class="font-bold text-slate-600">支点からの距離</label>
+                            <span id="distA_val" class="font-extrabold text-blue-600 text-lg">1.0 m</span>
+                        </div>
+                        <input type="range" id="distA" min="0.5" max="2.8" step="0.1" value="1.0" class="w-full">
+                    </div>
+                </div>
+
+                <div class="bg-blue-50 rounded-xl p-4 border border-blue-100">
+                    <div class="text-xs font-bold text-blue-400 mb-1 uppercase tracking-wider">左のモーメント (重さ × 距離)</div>
+                    <div id="momentA" class="text-2xl font-mono font-black text-blue-700">60 × 1.0 = 60.0</div>
+                </div>
+            </div>
+
+            <!-- Right Person (Red) -->
+            <div class="space-y-6 bg-white p-6 rounded-2xl shadow-sm border-2 border-red-100 relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-2 h-full bg-red-500"></div>
+                <div class="flex items-center gap-3 mb-2 justify-end md:justify-start">
+                    <div class="w-8 h-8 rounded-full bg-red-500 flex items-center justify-center shadow-md">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" viewBox="0 0 20 20"
+                            fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
+                                clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                    <h2 class="text-2xl font-bold text-slate-800">右の人 <span class="text-red-600 text-lg">B</span></h2>
+                </div>
+
+                <div class="space-y-4">
+                    <div>
+                        <div class="flex justify-between mb-2">
+                            <label class="font-bold text-slate-600">重さ (質量)</label>
+                            <span id="massB_val" class="font-extrabold text-red-600 text-lg">30 kg</span>
+                        </div>
+                        <input type="range" id="massB" min="10" max="100" step="1" value="30" class="w-full">
+                    </div>
+                    <div>
+                        <div class="flex justify-between mb-2">
+                            <label class="font-bold text-slate-600">支点からの距離</label>
+                            <span id="distB_val" class="font-extrabold text-red-600 text-lg">2.0 m</span>
+                        </div>
+                        <input type="range" id="distB" min="0.5" max="2.8" step="0.1" value="2.0" class="w-full">
+                    </div>
+                </div>
+
+                <div class="bg-red-50 rounded-xl p-4 border border-red-100">
+                    <div class="text-xs font-bold text-red-400 mb-1 uppercase tracking-wider">右のモーメント (重さ × 距離)</div>
+                    <div id="momentB" class="text-2xl font-mono font-black text-red-700">30 × 2.0 = 60.0</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Explanation -->
+        <div class="bg-indigo-50 p-6 md:p-8 border-t border-indigo-100 text-center">
+            <p class="text-slate-700 font-medium leading-relaxed max-w-3xl mx-auto">
+                <span class="text-xl">💡</span>
+                重い人（左）が支点に近づき、軽い人（右）が支点から遠ざかることで、左右の<strong>「回転する力（モーメント）」</strong>が等しくなり、シーソーは水平につりあいます。スライダーを動かして、どんな組み合わせでつりあうか実験してみましょう！
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // State Management
+        let state = {
+            massA: 60,
+            distA: 1.0,
+            massB: 30,
+            distB: 2.0,
+            isRunning: false // シミュレーション実行中フラグ
+        };
+
+        // Constants for Physics & Rendering
+        const FULCRUM_X = 400;
+        const FULCRUM_Y = 350;
+        const BOARD_WIDTH = 600;
+        const BOARD_HEIGHT = 20;
+        const PIXELS_PER_METER = 100;
+
+        // Matter.js Module Aliases
+        const Engine = Matter.Engine,
+            Runner = Matter.Runner,
+            Body = Matter.Body,
+            Bodies = Matter.Bodies,
+            Constraint = Matter.Constraint,
+            Composite = Matter.Composite,
+            Events = Matter.Events; // 追加
+
+        let engine, runner;
+        let board; // 人の物理ボディとジョイントは廃止し、計算で処理する
+
+        // Canvas context
+        const canvas = document.getElementById('simCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Helper function: Calculate drawing radius based on mass
+        function getRadius(mass) {
+            return 15 + Math.sqrt(mass) * 3.5;
+        }
+
+        function initPhysics() {
+            engine = Engine.create();
+            // Higher iterations for better stability
+            engine.positionIterations = 10;
+            engine.velocityIterations = 10;
+            engine.gravity.y = 1; // Normal gravity
+
+            // 1. Board (シーソーの板)
+            board = Bodies.rectangle(FULCRUM_X, FULCRUM_Y, BOARD_WIDTH, BOARD_HEIGHT, {
+                mass: 50, // Heavy enough to be stable, light enough to be tilted by people
+                frictionAir: 0.02, // 摩擦を少し減らして自然に揺れるように
+                collisionFilter: { category: 0x0002, mask: 0x0001 } // Collides only with ground
+            });
+
+            // 2. Fulcrum Joint (支点のヒンジ)
+            const fulcrumJoint = Constraint.create({
+                pointA: { x: FULCRUM_X, y: FULCRUM_Y }, // Fixed point in space
+                bodyB: board,
+                pointB: { x: 0, y: 0 }, // Center of the board
+                length: 0,
+                stiffness: 1
+            });
+
+            // 3. Ground (地面: 板が裏返らないようにする)
+            const ground = Bodies.rectangle(400, 470, 800, 40, {
+                isStatic: true,
+                collisionFilter: { category: 0x0001, mask: 0x0002 } // Collides with board
+            });
+
+            Composite.add(engine.world, [board, fulcrumJoint, ground]);
+
+            // カスタム物理演算: 人を独立した物体ではなく、板への「トルク(回転力)」として計算
+            const TOLERANCE = 3.0; // 少しズレても釣り合う「寛容さ」の許容値
+
+            Events.on(engine, 'beforeUpdate', function () {
+                if (!state.isRunning) {
+                    Body.setAngle(board, 0);
+                    Body.setAngularVelocity(board, 0);
+                    Body.setPosition(board, { x: FULCRUM_X, y: FULCRUM_Y });
+                    Body.setVelocity(board, { x: 0, y: 0 });
+                } else {
+                    // モーメント（重さ × 距離）の計算
+                    const momentA = state.massA * state.distA;
+                    const momentB = state.massB * state.distB;
+                    const diff = momentB - momentA; // 正なら右回り、負なら左回り
+
+                    // 許容誤差以内なら釣り合わせる（寛容なシミュレーション）
+                    if (Math.abs(diff) <= TOLERANCE) {
+                        // 揺れをゆっくり止める（水平に戻る復元力を少し与える）
+                        board.torque = -board.angle * 0.2;
+                        Body.setAngularVelocity(board, board.angularVelocity * 0.9);
+                    } else {
+                        // 傾けるためのトルクをかける (角度による水平距離の減少をcosで考慮)
+                        // diffからTOLERANCE分を引いた力が働くようにして、急激な動きを抑える
+                        const effectiveDiff = diff > 0 ? diff - TOLERANCE : diff + TOLERANCE;
+                        board.torque = effectiveDiff * Math.cos(board.angle) * 0.08;
+                    }
+                }
+            });
+
+            // Start Physics
+            runner = Runner.create();
+            Runner.run(runner, engine);
+
+            // Apply initial state
+            updatePhysics();
+
+            // Start Rendering
+            requestAnimationFrame(renderLoop);
+        }
+
+        function updatePhysics() {
+            // Wake up board if sleeping
+            Matter.Sleeping.set(board, false);
+
+            updateUI();
+        }
+
+        function startSimulation() {
+            state.isRunning = true;
+            // 物理エンジンの中で固定を解除される
+            // 静止摩擦のような引っかかりを防ぐため、微小な力を与える
+            Body.setAngularVelocity(board, 0.0001);
+            updateUI();
+        }
+
+        function resetSimulation() {
+            state.isRunning = false;
+
+            // 位置・角度・速度をリセットして安定させる
+            Body.setAngle(board, 0);
+            Body.setAngularVelocity(board, 0);
+            Body.setVelocity(board, { x: 0, y: 0 });
+            Body.setPosition(board, { x: FULCRUM_X, y: FULCRUM_Y });
+
+            updateUI();
+        }
+
+        function updateUI() {
+            // Update Labels
+            document.getElementById('massA_val').innerText = state.massA + ' kg';
+            document.getElementById('distA_val').innerText = state.distA.toFixed(1) + ' m';
+            document.getElementById('massB_val').innerText = state.massB + ' kg';
+            document.getElementById('distB_val').innerText = state.distB.toFixed(1) + ' m';
+
+            // Calculate Moments
+            const momentA = state.massA * state.distA;
+            const momentB = state.massB * state.distB;
+
+            document.getElementById('momentA').innerText = `${state.massA} × ${state.distA.toFixed(1)} = ${momentA.toFixed(1)}`;
+            document.getElementById('momentB').innerText = `${state.massB} × ${state.distB.toFixed(1)} = ${momentB.toFixed(1)}`;
+
+            // Determine Status
+            const diff = momentA - momentB;
+            const TOLERANCE = 3.0; // 物理演算と同じ許容値
+            const statusEl = document.getElementById('status');
+            const containerEl = document.getElementById('statusContainer');
+
+            if (state.isRunning) {
+                // 実行中のステータス表示
+                if (Math.abs(diff) === 0) {
+                    statusEl.innerText = '✨ 完璧につりあっている！ ✨';
+                    statusEl.className = 'text-2xl font-bold text-green-600';
+                    containerEl.className = 'absolute top-6 left-1/2 -translate-x-1/2 bg-green-50/95 backdrop-blur-sm px-8 py-3 rounded-full shadow-lg border-2 border-green-400 transform scale-105 transition-all duration-300';
+                } else if (Math.abs(diff) <= TOLERANCE) {
+                    statusEl.innerText = '👍 ほぼつりあっている！';
+                    statusEl.className = 'text-2xl font-bold text-emerald-600';
+                    containerEl.className = 'absolute top-6 left-1/2 -translate-x-1/2 bg-emerald-50/95 backdrop-blur-sm px-8 py-3 rounded-full shadow-md border-2 border-emerald-400 transition-all duration-300';
+                } else if (diff > 0) {
+                    statusEl.innerText = '左に傾いた！';
+                    statusEl.className = 'text-2xl font-bold text-blue-600';
+                    containerEl.className = 'absolute top-6 left-1/2 -translate-x-1/2 bg-white/95 backdrop-blur-sm px-8 py-3 rounded-full shadow-md border border-slate-200 transition-all duration-300';
+                } else {
+                    statusEl.innerText = '右に傾いた！';
+                    statusEl.className = 'text-2xl font-bold text-red-600';
+                    containerEl.className = 'absolute top-6 left-1/2 -translate-x-1/2 bg-white/95 backdrop-blur-sm px-8 py-3 rounded-full shadow-md border border-slate-200 transition-all duration-300';
+                }
+            } else {
+                // 停止中のステータス表示
+                statusEl.innerText = '設定を変更してスタートを押そう';
+                statusEl.className = 'text-xl font-bold text-slate-600';
+                containerEl.className = 'absolute top-6 left-1/2 -translate-x-1/2 bg-white/95 backdrop-blur-sm px-8 py-3 rounded-full shadow-md border border-slate-200 transition-all duration-300';
+            }
+
+            // スライダーとボタンの有効/無効の切り替え
+            const inputsList = ['massA', 'distA', 'massB', 'distB'];
+            inputsList.forEach(id => {
+                document.getElementById(id).disabled = state.isRunning;
+            });
+
+            if (state.isRunning) {
+                document.getElementById('btnStart').classList.add('hidden');
+                document.getElementById('btnReset').classList.remove('hidden');
+            } else {
+                document.getElementById('btnStart').classList.remove('hidden');
+                document.getElementById('btnReset').classList.add('hidden');
+            }
+        }
+
+        // Attach Event Listeners to Sliders
+        const inputs = ['massA', 'distA', 'massB', 'distB'];
+        inputs.forEach(id => {
+            document.getElementById(id).addEventListener('input', (e) => {
+                state[id] = parseFloat(e.target.value);
+                updatePhysics();
+            });
+        });
+
+        // ボタンのイベントリスナー
+        document.getElementById('btnStart').addEventListener('click', startSimulation);
+        document.getElementById('btnReset').addEventListener('click', resetSimulation);
+
+        // Custom Drawing logic
+        function drawRoundRect(x, y, w, h, r) {
+            ctx.beginPath();
+            ctx.moveTo(x + r, y);
+            ctx.lineTo(x + w - r, y);
+            ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+            ctx.lineTo(x + w, y + h - r);
+            ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+            ctx.lineTo(x + r, y + h);
+            ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+            ctx.lineTo(x, y + r);
+            ctx.quadraticCurveTo(x, y, x + r, y);
+            ctx.closePath();
+            ctx.fill();
+        }
+
+        function drawPerson(x, y, mass, isLeft, theta) {
+            const radius = getRadius(mass);
+            // 物理重心(y=0)から、板の表面までの高さ分だけ描画位置をずらす
+            const h = BOARD_HEIGHT / 2 + radius;
+
+            // 板の角度(theta)に合わせて法線方向へオフセット
+            const drawX = x + h * Math.sin(theta);
+            const drawY = y - h * Math.cos(theta);
+
+            ctx.save();
+            // Move to visual position
+            ctx.translate(drawX, drawY);
+            // Notice: We DO NOT rotate based on physics angle so the person stays upright!
+
+            // Body shadow
+            ctx.beginPath();
+            ctx.arc(0, 5, radius, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.lineWidth = 4;
+            ctx.strokeStyle = isLeft ? '#1e3a8a' : '#7f1d1d';
+            ctx.stroke();
+
+            // Face (Eyes)
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.arc(-radius * 0.35, -radius * 0.2, radius * 0.25, 0, Math.PI * 2);
+            ctx.arc(radius * 0.35, -radius * 0.2, radius * 0.25, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#0f172a';
+            ctx.beginPath();
+            ctx.arc(-radius * 0.35, -radius * 0.2, radius * 0.1, 0, Math.PI * 2);
+            ctx.arc(radius * 0.35, -radius * 0.2, radius * 0.1, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Mass Text
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 16px "Inter", sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            // Simple stroke for text readability
+            ctx.lineWidth = 3;
+            ctx.strokeStyle = '#000000';
+            ctx.strokeText(`${mass}kg`, 0, radius * 0.45);
+            ctx.fillText(`${mass}kg`, 0, radius * 0.45);
+
+            ctx.restore();
+        }
+
+        function renderLoop() {
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 1. Draw Background / Ground
+            // Dirt
+            ctx.fillStyle = '#78350f'; // amber-900
+            ctx.fillRect(0, 470, 800, 30);
+            // Grass
+            ctx.fillStyle = '#65a30d'; // lime-600
+            ctx.fillRect(0, 450, 800, 20);
+
+            // 2. Draw Fulcrum Base (支点の台座)
+            ctx.save();
+            ctx.beginPath();
+            ctx.moveTo(FULCRUM_X, FULCRUM_Y); // Top peak
+            ctx.lineTo(FULCRUM_X - 50, 450); // Bottom left
+            ctx.lineTo(FULCRUM_X + 50, 450); // Bottom right
+            ctx.closePath();
+            // Gradient for 3D effect
+            const baseGrad = ctx.createLinearGradient(FULCRUM_X - 50, FULCRUM_Y, FULCRUM_X + 50, 450);
+            baseGrad.addColorStop(0, '#64748b'); // slate-500
+            baseGrad.addColorStop(1, '#334155'); // slate-700
+            ctx.fillStyle = baseGrad;
+            ctx.fill();
+
+            // Fulcrum Pin (ピン)
+            ctx.beginPath();
+            ctx.arc(FULCRUM_X, FULCRUM_Y, 8, 0, Math.PI * 2);
+            ctx.fillStyle = '#0f172a';
+            ctx.fill();
+            ctx.restore();
+
+            // 3. Draw Board (シーソーの板)
+            ctx.save();
+            ctx.translate(board.position.x, board.position.y);
+            ctx.rotate(board.angle);
+
+            // Wooden texture color
+            ctx.fillStyle = '#b45309'; // amber-700
+            drawRoundRect(-BOARD_WIDTH / 2, -BOARD_HEIGHT / 2, BOARD_WIDTH, BOARD_HEIGHT, 10);
+
+            // Top highlight
+            ctx.fillStyle = '#d97706'; // amber-600
+            drawRoundRect(-BOARD_WIDTH / 2 + 2, -BOARD_HEIGHT / 2 + 2, BOARD_WIDTH - 4, BOARD_HEIGHT / 2, 8);
+
+            // Marks for distance (1m, 2m)
+            ctx.fillStyle = '#fef3c7'; // amber-50
+            ctx.font = 'bold 12px "Inter", sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'bottom';
+
+            for (let i = 1; i <= 2; i++) {
+                let px = i * PIXELS_PER_METER;
+                // Right side
+                ctx.fillRect(px - 1, -BOARD_HEIGHT / 2, 2, 8);
+                ctx.fillText(`${i}m`, px, -BOARD_HEIGHT / 2 - 2);
+                // Left side
+                ctx.fillRect(-px - 1, -BOARD_HEIGHT / 2, 2, 8);
+                ctx.fillText(`${i}m`, -px, -BOARD_HEIGHT / 2 - 2);
+            }
+            ctx.restore();
+
+            // 4. Draw People (物理エンジンではなく計算した座標で描画)
+            function getPersonPos(dist, isLeft, angle) {
+                const r = (isLeft ? -1 : 1) * dist * PIXELS_PER_METER;
+                const x = board.position.x + r * Math.cos(angle);
+                const y = board.position.y + r * Math.sin(angle);
+                return { x, y };
+            }
+
+            const posA = getPersonPos(state.distA, true, board.angle);
+            const posB = getPersonPos(state.distB, false, board.angle);
+
+            drawPerson(posA.x, posA.y, state.massA, true, board.angle);
+            drawPerson(posB.x, posB.y, state.massB, false, board.angle);
+
+            requestAnimationFrame(renderLoop);
+        }
+
+        // Initialize on load
+        window.onload = () => {
+            initPhysics();
+        };
+    </script>
+</body>
+
+</html>

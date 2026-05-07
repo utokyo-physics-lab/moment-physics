@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>純粋な物理演算による にんじん重心シミュレーション</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+        }
+
+        #canvas-container canvas {
+            border-radius: 0.5rem;
+            box-shadow: inset 0 2px 4px 0 rgb(0 0 0 / 0.05);
+            background: linear-gradient(to bottom, #f0f9ff, #ffffff);
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        /* キャンバス上のオーバーレイ用 */
+        .overlay-label {
+            position: absolute;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            font-weight: bold;
+            transition: all 0.1s linear;
+        }
+
+        .text-shadow-white {
+            text-shadow: 1px 1px 0 #fff, -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff;
+        }
+
+        .digital-display {
+            background-color: #0f172a;
+            font-family: 'Courier New', Courier, monospace;
+            padding: 4px 12px;
+            border-radius: 4px;
+            border: 2px solid #334155;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.8);
+        }
+    </style>
+</head>
+
+<body class="bg-stone-100 font-sans text-stone-800 min-h-screen flex items-center justify-center p-4">
+
+    <div class="max-w-4xl w-full bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col">
+        <!-- ヘッダー -->
+        <div class="bg-orange-600 p-4 text-white text-center">
+            <h1 class="text-3xl font-bold flex items-center justify-center gap-2">
+                🥕 にんじんの重心と重さ
+            </h1>
+        </div>
+
+        <!-- メインキャンバス領域 -->
+        <div id="canvas-wrapper"
+            class="relative w-full h-[400px] border-b border-stone-200 overflow-hidden bg-stone-50">
+            <div id="canvas-container" class="w-full h-full flex justify-center items-center"></div>
+
+            <!-- 動的ラベル（質量表示など） -->
+            <div id="label-left" class="overlay-label digital-display text-rose-400 text-2xl hidden z-10">0 g</div>
+            <div id="label-right" class="overlay-label digital-display text-blue-400 text-2xl hidden z-10">0 g</div>
+            <div id="label-fulcrum" class="overlay-label text-stone-600 text-sm hidden mt-8 text-shadow-white">支点</div>
+        </div>
+
+        <!-- コントロールパネル -->
+        <div class="p-6 bg-white min-h-[220px] flex flex-col justify-center">
+            <!-- バランスフェーズ UI -->
+            <div id="panel-balance" class="space-y-5 transition-opacity duration-300">
+                <h2 class="text-xl font-bold text-stone-800 flex items-center justify-center gap-2">
+                    スライダーを動かして、にんじんを水平に釣り合わせよう！
+                </h2>
+
+                <div class="flex items-center gap-4 bg-stone-50 p-4 rounded-xl border border-stone-100">
+                    <span class="text-sm font-bold text-rose-500 w-16 text-center">太い方</span>
+                    <input type="range" id="slider-fulcrum" min="200" max="600" value="400"
+                        class="flex-1 h-3 bg-stone-200 rounded-lg appearance-none cursor-pointer accent-orange-500">
+                    <span class="text-sm font-bold text-blue-500 w-16 text-center">細い方</span>
+                </div>
+
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <button id="btn-auto-balance"
+                        class="flex-1 py-3 px-4 bg-stone-100 hover:bg-stone-200 text-stone-700 font-semibold rounded-lg transition-colors border border-stone-200 shadow-sm">
+                        完璧な重心を自動で探す
+                    </button>
+                    <button id="btn-cut" disabled
+                        class="flex-1 py-3 px-4 flex items-center justify-center gap-2 font-bold rounded-lg transition-all bg-stone-200 text-stone-400 cursor-not-allowed">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M14.121 14.121L19 19m-7-7l7-7m-7 7l-2.879 2.879M12 12L9.121 9.121m0 5.758a3 3 0 10-4.243 4.243 3 3 0 004.243-4.243zm0-5.758a3 3 0 10-4.243-4.243 3 3 0 004.243 4.243z">
+                            </path>
+                        </svg>
+                        ここで切断する
+                    </button>
+                </div>
+                <p id="msg-balance" class="text-center text-sm font-medium text-stone-500">にんじんが安定して水平になると切断できます</p>
+            </div>
+
+            <!-- 結果フェーズ UI -->
+            <div id="panel-result" class="space-y-4 text-center hidden transition-opacity duration-300">
+                <h2 class="text-4xl font-black text-rose-600">太い方が重い！</h2>
+
+                <div class="flex justify-center items-center gap-8 py-2">
+                    <div class="text-center">
+                        <div class="text-lg font-bold text-stone-600 mb-1">太い方（左）</div>
+                        <div id="result-mass-left" class="text-5xl font-black text-rose-500">0 g</div>
+                    </div>
+                    <div class="text-4xl font-bold text-stone-300">vs</div>
+                    <div class="text-center">
+                        <div class="text-lg font-bold text-stone-600 mb-1">細い方（右）</div>
+                        <div id="result-mass-right" class="text-5xl font-black text-blue-500">0 g</div>
+                    </div>
+                </div>
+
+                <div class="pt-4">
+                    <button id="btn-reset"
+                        class="py-3 px-8 bg-stone-800 hover:bg-stone-900 text-white font-bold rounded-full text-lg transition-colors flex items-center justify-center gap-2 mx-auto">
+                        もう一度やる
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Matter.js のモジュールエイリアス
+        const Engine = Matter.Engine,
+            Render = Matter.Render,
+            Runner = Matter.Runner,
+            Bodies = Matter.Bodies,
+            Composite = Matter.Composite,
+            Constraint = Matter.Constraint,
+            Mouse = Matter.Mouse,
+            MouseConstraint = Matter.MouseConstraint,
+            Vertices = Matter.Vertices,
+            Body = Matter.Body,
+            Events = Matter.Events;
+
+        let engine, render, runner;
+        let carrotBody, fulcrumBody;
+        let leftPartBody, rightPartBody;
+        let scaleParts = [];
+
+        // アプリの状態
+        let currentStep = 'BALANCE'; // BALANCE, WEIGH, RESULT
+
+        const width = 800;
+        const height = 400;
+
+        // DOM要素
+        const canvasContainer = document.getElementById('canvas-container');
+        const sliderFulcrum = document.getElementById('slider-fulcrum');
+        const btnAutoBalance = document.getElementById('btn-auto-balance');
+        const btnCut = document.getElementById('btn-cut');
+        const btnReset = document.getElementById('btn-reset');
+
+        const panelBalance = document.getElementById('panel-balance');
+        const panelResult = document.getElementById('panel-result');
+        const msgBalance = document.getElementById('msg-balance');
+
+        const labelLeft = document.getElementById('label-left');
+        const labelRight = document.getElementById('label-right');
+        const labelFulcrum = document.getElementById('label-fulcrum');
+
+        // シミュレーション初期化
+        function initSimulation() {
+            // 既存のエンジンがあれば破棄
+            if (engine) {
+                Render.stop(render);
+                Runner.stop(runner);
+                canvasContainer.innerHTML = '';
+                labelLeft.classList.add('hidden');
+                labelRight.classList.add('hidden');
+                labelFulcrum.classList.add('hidden');
+            }
+
+            engine = Engine.create();
+            // 安定させるためにイテレーションを増やす
+            engine.positionIterations = 10;
+            engine.velocityIterations = 10;
+
+            render = Render.create({
+                element: canvasContainer,
+                engine: engine,
+                options: {
+                    width, height,
+                    wireframes: false,
+                    background: 'transparent',
+                    pixelRatio: window.devicePixelRatio // 高解像度対応
+                }
+            });
+
+            // 画面外に落ちないように見えない壁・床を設置
+            const walls = [
+                Bodies.rectangle(400, 410, 810, 20, { isStatic: true, render: { visible: false } }), // 床
+                Bodies.rectangle(-10, 200, 20, 420, { isStatic: true, render: { visible: false } }), // 左壁
+                Bodies.rectangle(810, 200, 20, 420, { isStatic: true, render: { visible: false } })  // 右壁
+            ];
+            Composite.add(engine.world, walls);
+
+            // マウス操作の追加（にんじんをドラッグできるようにする）
+            const mouse = Mouse.create(render.canvas);
+            const mouseConstraint = MouseConstraint.create(engine, {
+                mouse: mouse,
+                constraint: { stiffness: 0.2, render: { visible: false } }
+            });
+            Composite.add(engine.world, mouseConstraint);
+            render.mouse = mouse;
+
+            setupBalanceScene();
+
+            Render.run(render);
+            runner = Runner.create();
+            Runner.run(runner, engine);
+
+            currentStep = 'BALANCE';
+            updateUI();
+
+            // 毎フレームの処理（状態監視とラベル位置更新）
+            Events.on(engine, 'afterUpdate', gameLoop);
+        }
+
+        function setupBalanceScene() {
+            // にんじんの形状定義（左が太く、右が細い台形）
+            // 物理エンジンがこの面積から質量と重心を自動計算します。
+            const carrotVerts = [
+                { x: -180, y: -40 }, // 左上
+                { x: 180, y: -10 },  // 右上
+                { x: 180, y: 10 },   // 右下
+                { x: -180, y: 40 }   // 左下
+            ];
+
+            // 剛体生成。fromVerticesを使うと自動的に頂点の重心がbody.positionになります。
+            carrotBody = Bodies.fromVertices(400, 150, [carrotVerts], {
+                density: 0.005, // 少し重くして安定させる
+                friction: 1.0,  // 滑り落ちないように摩擦を最大に
+                restitution: 0.1, // 弾まない
+                render: {
+                    fillStyle: '#f97316', // オレンジ色
+                    strokeStyle: '#c2410c',
+                    lineWidth: 2
+                }
+            });
+
+            // 支点（台形のような形の静的剛体）
+            fulcrumBody = Bodies.trapezoid(400, 300, 60, 60, 0.6, {
+                isStatic: true,
+                friction: 1.0,
+                render: { fillStyle: '#64748b' }
+            });
+
+            Composite.add(engine.world, [carrotBody, fulcrumBody]);
+
+            labelFulcrum.classList.remove('hidden');
+        }
+
+        // スライダーで支点を動かす
+        sliderFulcrum.addEventListener('input', (e) => {
+            if (currentStep !== 'BALANCE' || !fulcrumBody) return;
+            const newX = parseInt(e.target.value);
+            Body.setPosition(fulcrumBody, { x: newX, y: fulcrumBody.position.y });
+            // 支点が動いた際に物理演算を確実に更新させる
+            if (carrotBody) {
+                carrotBody.isSleeping = false;
+            }
+        });
+
+        // 「完璧な重心を自動で探す」ボタン
+        btnAutoBalance.addEventListener('click', () => {
+            if (currentStep !== 'BALANCE' || !carrotBody || !fulcrumBody) return;
+
+            // Matter.jsは剛体のpositionを重心としているため、
+            // にんじんのx座標に支点を移動させれば完璧に釣り合います。
+            const targetX = carrotBody.position.x;
+
+            Body.setPosition(fulcrumBody, { x: targetX, y: fulcrumBody.position.y });
+            Body.setAngle(carrotBody, 0); // 傾きを水平にリセット
+            Body.setVelocity(carrotBody, { x: 0, y: 0 });
+            Body.setAngularVelocity(carrotBody, 0);
+
+            sliderFulcrum.value = targetX;
+        });
+
+        // 任意のX座標で多角形を切断するロジック（ここが完全物理シミュレーションの証拠）
+        function executeCut() {
+            if (!carrotBody || !fulcrumBody) return;
+
+            // 綺麗に切断するため、一時的に水平に固定
+            Body.setAngle(carrotBody, 0);
+
+            // 現在のワールド座標系における頂点を取得
+            const vertices = carrotBody.vertices;
+            const cutX = fulcrumBody.position.x;
+
+            let leftVerts = [];
+            let rightVerts = [];
+
+            // ポリゴンの各辺と切断線 (x = cutX) の交点を求める
+            for (let i = 0; i < vertices.length; i++) {
+                const p1 = vertices[i];
+                const p2 = vertices[(i + 1) % vertices.length];
+
+                // 頂点が線の左か右かに応じて振り分け
+                if (p1.x <= cutX) leftVerts.push({ x: p1.x, y: p1.y });
+                if (p1.x >= cutX) rightVerts.push({ x: p1.x, y: p1.y });
+
+                // 辺が切断線をまたいでいる場合、交点を計算して両方の配列に追加
+                if ((p1.x < cutX && p2.x > cutX) || (p1.x > cutX && p2.x < cutX)) {
+                    const t = (cutX - p1.x) / (p2.x - p1.x);
+                    const cutY = p1.y + t * (p2.y - p1.y);
+                    const intersection = { x: cutX, y: cutY };
+                    leftVerts.push(intersection);
+                    rightVerts.push(intersection);
+                }
+            }
+
+            // 分割された頂点群から新しい剛体を生成（中心座標を補正）
+            const createPart = (verts, color) => {
+                const center = Vertices.centre(verts);
+                return Bodies.fromVertices(center.x, center.y, [verts], {
+                    density: 0.005,
+                    friction: 1.0,
+                    render: { fillStyle: color, strokeStyle: '#c2410c', lineWidth: 2 }
+                });
+            };
+
+            leftPartBody = createPart(leftVerts, '#dc2626'); // 赤っぽいオレンジ（太い方）
+            rightPartBody = createPart(rightVerts, '#2563eb'); // 青っぽいオレンジ（細い方）
+
+            // 元のにんじんを消し、新しい2つのパーツを配置
+            Composite.remove(engine.world, carrotBody);
+            Composite.add(engine.world, [leftPartBody, rightPartBody]);
+            carrotBody = null;
+
+            // 支点を消す（落下させる）
+            Composite.remove(engine.world, fulcrumBody);
+            fulcrumBody = null;
+            labelFulcrum.classList.add('hidden');
+
+            // --- 電子天秤の生成 ---
+            const leftScaleX = leftPartBody.position.x;
+            const rightScaleX = rightPartBody.position.x;
+
+            // 電子天秤の台座（静的剛体）
+            const scaleOpts = {
+                isStatic: true,
+                friction: 1.0, // 滑り落ちないように
+                render: { fillStyle: '#94a3b8' }
+            };
+            const leftScale = Bodies.rectangle(leftScaleX, 380, 160, 20, scaleOpts);
+            const rightScale = Bodies.rectangle(rightScaleX, 380, 160, 20, scaleOpts);
+
+            // 電子天秤のディスプレイ部分（装飾用）
+            const leftDisplay = Bodies.rectangle(leftScaleX, 400, 120, 20, { isStatic: true, render: { fillStyle: '#1e293b' } });
+            const rightDisplay = Bodies.rectangle(rightScaleX, 400, 120, 20, { isStatic: true, render: { fillStyle: '#1e293b' } });
+
+            scaleParts = [leftScale, rightScale, leftDisplay, rightDisplay];
+            Composite.add(engine.world, scaleParts);
+
+            // 質量ラベルの表示
+            labelLeft.classList.remove('hidden');
+            labelRight.classList.remove('hidden');
+
+            currentStep = 'RESULT';
+            updateUI();
+        }
+
+        btnCut.addEventListener('click', executeCut);
+
+        btnReset.addEventListener('click', initSimulation);
+
+        // 毎フレームのループ処理
+        function gameLoop() {
+            // バランスフェーズの判定（切断ボタンの有効化）
+            if (currentStep === 'BALANCE' && carrotBody && fulcrumBody) {
+                // にんじんが支点の上にあり、かつ静止している場合（速度・角速度がほぼゼロ）
+                const isResting = Math.abs(carrotBody.angularVelocity) < 0.005 &&
+                    Math.abs(carrotBody.velocity.x) < 0.1 &&
+                    Math.abs(carrotBody.velocity.y) < 0.1;
+
+                // 形状が非対称（台形）のため、釣り合った状態での自然な角度は完全に水平(angle=0)ではありません。
+                // そのため角度チェックは外し、重心と支点のX座標の近さで判定します（許容範囲を15に拡大）。
+                const isBalanced = Math.abs(carrotBody.position.x - fulcrumBody.position.x) < 15;
+
+                // 床に落ちていないか確認（支点より上にいるか）
+                const isOnFulcrum = carrotBody.position.y < fulcrumBody.position.y;
+
+                if (isResting && isBalanced && isOnFulcrum) {
+                    btnCut.disabled = false;
+                    btnCut.classList.remove('bg-stone-200', 'text-stone-400', 'cursor-not-allowed');
+                    btnCut.classList.add('bg-orange-500', 'hover:bg-orange-600', 'text-white', 'shadow-md');
+                    msgBalance.innerHTML = "✨ 完璧に釣り合いました！切断できます ✨";
+                    msgBalance.classList.replace('text-stone-500', 'text-emerald-600');
+                } else {
+                    btnCut.disabled = true;
+                    btnCut.classList.add('bg-stone-200', 'text-stone-400', 'cursor-not-allowed');
+                    btnCut.classList.remove('bg-orange-500', 'hover:bg-orange-600', 'text-white', 'shadow-md');
+                    msgBalance.innerHTML = "にんじんが安定して釣り合うと切断できます";
+                    msgBalance.classList.replace('text-emerald-600', 'text-stone-500');
+                }
+
+                // 支点ラベルの追従
+                updateLabelPosition(labelFulcrum, fulcrumBody.position.x, fulcrumBody.position.y + 40);
+            }
+
+            // 質量ラベルの追従と表示更新
+            if (currentStep === 'RESULT' && scaleParts.length >= 4) {
+                // ディスプレイ部分（剛体インデックス2, 3）の位置にラベルを固定
+                updateLabelPosition(labelLeft, scaleParts[2].position.x, scaleParts[2].position.y);
+                updateLabelPosition(labelRight, scaleParts[3].position.x, scaleParts[3].position.y);
+
+                // 物理エンジンが計算した純粋な mass(質量) の値をスケーリングして表示
+                // Matter.jsのmassは面積×密度。分かりやすくするため1000倍して整数表示。
+                const leftMass = Math.round(leftPartBody.mass * 1000);
+                const rightMass = Math.round(rightPartBody.mass * 1000);
+                labelLeft.innerText = `${leftMass} g`;
+                labelRight.innerText = `${rightMass} g`;
+
+                // 大きなパネル用にも数値をセット
+                document.getElementById('result-mass-left').innerText = `${leftMass} g`;
+                document.getElementById('result-mass-right').innerText = `${rightMass} g`;
+            }
+        }
+
+        // HTML上のラベル位置をキャンバス座標に合わせるヘルパー
+        function updateLabelPosition(el, x, y) {
+            // キャンバスの表示サイズと論理サイズの比率を考慮
+            const rect = canvasContainer.getBoundingClientRect();
+            const scaleX = rect.width / width;
+            const scaleY = rect.height / height;
+
+            el.style.left = `${rect.left + x * scaleX}px`;
+            el.style.top = `${rect.top + y * scaleY}px`;
+        }
+
+        function updateUI() {
+            panelBalance.classList.add('hidden');
+            panelResult.classList.add('hidden');
+
+            if (currentStep === 'BALANCE') panelBalance.classList.remove('hidden');
+            if (currentStep === 'RESULT') panelResult.classList.remove('hidden');
+        }
+
+        // ウィンドウリサイズ時にラベル位置がズレないようにする
+        window.addEventListener('resize', () => {
+            if (fulcrumBody) updateLabelPosition(labelFulcrum, fulcrumBody.position.x, fulcrumBody.position.y + 40);
+        });
+
+        // 起動
+        window.onload = initSimulation;
+
+    </script>
+</body>
+
+</html>

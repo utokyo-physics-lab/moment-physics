@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ほうきの重心を探すシミュレーション</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a;
+            /* slate-900 */
+        }
+
+        canvas {
+            display: block;
+            max-width: 100%;
+            height: auto;
+        }
+
+        /* Custom scrollbar for webkit */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+    </style>
+</head>
+
+<body class="text-slate-200 min-h-screen flex flex-col items-center justify-center p-4">
+    <div class="max-w-4xl w-full bg-slate-800 rounded-2xl shadow-2xl overflow-hidden border border-slate-700">
+
+        <!-- Header & Explanation -->
+        <div class="p-6 md:p-8 border-b border-slate-700 bg-slate-800/50">
+            <h1 class="text-3xl font-bold mb-3 text-white flex items-center gap-3">
+                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                    class="text-amber-500">
+                    <path d="M14.5 17.5L3 6l2.5-2.5L17 15" />
+                    <path d="m15 6 3-3 3 3-3 3" />
+                    <path d="m20.2 13.8 1.8 1.8-6 6-1.8-1.8" />
+                </svg>
+                ほうきの重心を探す物理実験
+            </h1>
+            <p class="text-slate-300 leading-relaxed text-sm md:text-base">
+                長い物体（ほうきなど）の両端を指で下から支え、ゆっくりと内側に寄せていきます。<br>
+                重心に近い方の指は<strong>垂直抗力が大きく（＝最大静止摩擦力が大きい）</strong>、遠い方の指は垂直抗力が小さくなります。<br>
+                摩擦力の限界が小さい方の指だけが先に滑るため、指は<strong>交互に滑りながら</strong>進み、最終的に必ず重心位置で合流します。
+            </p>
+        </div>
+
+        <div class="relative w-full overflow-x-auto bg-slate-900/50 flex justify-center py-8">
+            <!-- Canvas resolution is set to 800x450, styled by CSS to fit container -->
+            <canvas id="simCanvas" width="800" height="450"
+                class="rounded-lg shadow-[inset_0_2px_10px_rgba(0,0,0,0.5)] bg-slate-900"></canvas>
+        </div>
+
+        <div
+            class="p-6 md:p-8 bg-slate-800 border-t border-slate-700 flex flex-col md:flex-row gap-8 items-center justify-between">
+            <!-- Buttons -->
+            <div class="flex items-center gap-4 w-full md:w-auto justify-center">
+                <button id="startBtn"
+                    class="w-32 py-3 bg-blue-600 hover:bg-blue-500 active:bg-blue-700 rounded-lg text-white font-semibold transition-all shadow-lg shadow-blue-900/20 flex justify-center items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                        fill="currentColor" stroke="none">
+                        <path d="M8 5v14l11-7z" />
+                    </svg>
+                    再生
+                </button>
+                <button id="resetBtn"
+                    class="w-32 py-3 bg-slate-600 hover:bg-slate-500 active:bg-slate-700 rounded-lg text-white font-semibold transition-all shadow-lg shadow-slate-900/20 flex justify-center items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                        <path d="M3 3v5h5" />
+                    </svg>
+                    リセット
+                </button>
+            </div>
+
+            <!-- Slider -->
+            <div class="flex-1 w-full flex flex-col gap-3">
+                <div class="flex justify-between items-end">
+                    <label for="cgSlider" class="text-sm font-semibold text-slate-300">
+                        重心の位置を設定 (左端からの割合)
+                    </label>
+                    <span class="text-2xl font-bold text-amber-400 font-mono" id="cgValue">0.70</span>
+                </div>
+                <input type="range" id="cgSlider" min="0.15" max="0.85" step="0.01" value="0.7"
+                    class="w-full h-2 bg-slate-600 rounded-lg appearance-none cursor-pointer accent-amber-500">
+                <div class="flex justify-between text-xs text-slate-500 px-1">
+                    <span>左寄り</span>
+                    <span>中央</span>
+                    <span>右寄り</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // DOM Elements
+        const canvas = document.getElementById('simCanvas');
+        const ctx = canvas.getContext('2d');
+        const startBtn = document.getElementById('startBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const cgSlider = document.getElementById('cgSlider');
+        const cgValue = document.getElementById('cgValue');
+
+        // State Variables
+        let isPlaying = false;
+        let animationId = null;
+
+        // Configuration
+        const STICK = {
+            x: 100,         // Left edge of the stick
+            y: 150,         // Y position of the stick
+            length: 600,    // Length of the stick
+            height: 16      // Thickness of the stick
+        };
+        const MOVE_SPEED = 0.8; // Speed of fingers moving inwards (pixels per frame)
+
+        // Dynamic State
+        let cgRatio = parseFloat(cgSlider.value);
+        let cgX = STICK.x + STICK.length * cgRatio;
+
+        let fingerL = { x: STICK.x, y: STICK.y + STICK.height, sliding: false };
+        let fingerR = { x: STICK.x + STICK.length, y: STICK.y + STICK.height, sliding: false };
+
+        // Event Listeners
+        startBtn.addEventListener('click', () => {
+            isPlaying = !isPlaying;
+            updateStartButtonState();
+            if (isPlaying) {
+                gameLoop();
+            } else {
+                cancelAnimationFrame(animationId);
+            }
+        });
+
+        resetBtn.addEventListener('click', resetSimulation);
+
+        cgSlider.addEventListener('input', (e) => {
+            cgRatio = parseFloat(e.target.value);
+            cgValue.textContent = cgRatio.toFixed(2);
+            cgX = STICK.x + STICK.length * cgRatio;
+
+            // If fingers have passed the new center of gravity, reset them to avoid glitch
+            if (fingerL.x >= cgX || fingerR.x <= cgX) {
+                resetSimulation();
+            } else {
+                // Just redraw with new CG position if paused
+                if (!isPlaying) draw();
+            }
+        });
+
+        function updateStartButtonState() {
+            if (isPlaying) {
+                startBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="none"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg> 一時停止`;
+                startBtn.classList.replace('bg-blue-600', 'bg-amber-600');
+                startBtn.classList.replace('hover:bg-blue-500', 'hover:bg-amber-500');
+                startBtn.classList.replace('active:bg-blue-700', 'active:bg-amber-700');
+                startBtn.classList.replace('shadow-blue-900/20', 'shadow-amber-900/20');
+            } else {
+                startBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M8 5v14l11-7z"/></svg> 再生`;
+                startBtn.classList.replace('bg-amber-600', 'bg-blue-600');
+                startBtn.classList.replace('hover:bg-amber-500', 'hover:bg-blue-500');
+                startBtn.classList.replace('active:bg-amber-700', 'active:bg-blue-700');
+                startBtn.classList.replace('shadow-amber-900/20', 'shadow-blue-900/20');
+            }
+        }
+
+        function resetSimulation() {
+            isPlaying = false;
+            cancelAnimationFrame(animationId);
+            updateStartButtonState();
+
+            fingerL.x = STICK.x;
+            fingerR.x = STICK.x + STICK.length;
+            fingerL.sliding = false;
+            fingerR.sliding = false;
+
+            draw();
+        }
+
+        function updatePhysics() {
+            // Distance from each finger to the Center of Gravity
+            let distL = cgX - fingerL.x;
+            let distR = fingerR.x - cgX;
+            let totalDist = distL + distR; // Distance between fingers
+
+            // Stop condition: Fingers have met at the Center of Gravity
+            if (totalDist <= MOVE_SPEED * 2) {
+                isPlaying = false;
+                fingerL.sliding = false;
+                fingerR.sliding = false;
+                fingerL.x = cgX;
+                fingerR.x = cgX;
+                updateStartButtonState();
+                return;
+            }
+
+            // Calculate Normal Force (N) ratios using moment balance
+            // N_L * distL = N_R * distR  and  N_L + N_R = 1
+            // Therefore: N_L = distR / totalDist,  N_R = distL / totalDist
+            let NL = distR / totalDist;
+            let NR = distL / totalDist;
+
+            // The finger with the smaller normal force has less maximum static friction, 
+            // so it slips and moves inwards.
+            if (NL < NR) {
+                // Left finger slips
+                fingerL.x += MOVE_SPEED;
+                fingerL.sliding = true;
+                fingerR.sliding = false;
+            } else if (NR < NL) {
+                // Right finger slips
+                fingerR.x -= MOVE_SPEED;
+                fingerR.sliding = true;
+                fingerL.sliding = false;
+            } else {
+                // Extremely rare exact balance, both slip slightly
+                fingerL.x += MOVE_SPEED / 2;
+                fingerR.x -= MOVE_SPEED / 2;
+                fingerL.sliding = true;
+                fingerR.sliding = true;
+            }
+        }
+
+        function draw() {
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            drawBroom();
+            drawCenterOfGravity();
+
+            // Calculate current forces for display purposes
+            let distL = cgX - fingerL.x;
+            let distR = fingerR.x - cgX;
+            let totalDist = fingerR.x - fingerL.x;
+            let NL = totalDist > 0 ? (distR / totalDist) : 0.5;
+            let NR = totalDist > 0 ? (distL / totalDist) : 0.5;
+
+            drawFingerAndForce(fingerL, NL, '左指');
+            drawFingerAndForce(fingerR, NR, '右指');
+        }
+
+        function drawBroom() {
+            // Draw the stick (handle)
+            ctx.fillStyle = '#8B5A2B'; // Wood color
+
+            // Rounded rectangle for stick
+            ctx.beginPath();
+            ctx.roundRect(STICK.x, STICK.y, STICK.length, STICK.height, STICK.height / 2);
+            ctx.fill();
+
+            const centerY = STICK.y + STICK.height / 2;
+            const rightEdge = STICK.x + STICK.length;
+
+            // Draw the brush part at the right end
+            ctx.fillStyle = '#D97706'; // Amber/straw color
+            const brushLength = 160;
+            const brushRoot = rightEdge - brushLength;
+            const brushRadius = 35;
+
+            ctx.beginPath();
+            ctx.moveTo(brushRoot, STICK.y); // Top root
+            ctx.lineTo(rightEdge, centerY - brushRadius); // Top edge
+            ctx.lineTo(rightEdge + 8, centerY); // Tip
+            ctx.lineTo(rightEdge, centerY + brushRadius); // Bottom edge
+            ctx.lineTo(brushRoot, STICK.y + STICK.height); // Bottom root
+            ctx.fill();
+
+            // Brush details (lines)
+            ctx.strokeStyle = '#B45309';
+            ctx.lineWidth = 2;
+            for (let i = 1; i <= 7; i++) {
+                ctx.beginPath();
+                ctx.moveTo(brushRoot + 15, centerY - STICK.height / 2 + (STICK.height / 8) * i);
+                ctx.lineTo(rightEdge - 2, centerY - brushRadius + (brushRadius * 2 / 8) * i);
+                ctx.stroke();
+            }
+
+            // Brush bindings (straps)
+            ctx.fillStyle = '#78350F';
+            ctx.beginPath();
+            ctx.roundRect(brushRoot, STICK.y - 4, 16, STICK.height + 8, 4);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.roundRect(brushRoot + 22, STICK.y - 2, 10, STICK.height + 4, 3);
+            ctx.fill();
+        }
+
+        function drawCenterOfGravity() {
+            // Vertical line
+            ctx.strokeStyle = '#EF4444'; // Red
+            ctx.lineWidth = 2;
+            ctx.setLineDash([5, 5]);
+            ctx.beginPath();
+            ctx.moveTo(cgX, STICK.y - 40);
+            ctx.lineTo(cgX, STICK.y + 120);
+            ctx.stroke();
+            ctx.setLineDash([]); // Reset
+
+            // CG Target icon
+            ctx.fillStyle = '#EF4444';
+            ctx.beginPath();
+            ctx.arc(cgX, STICK.y + STICK.height / 2, 6, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.strokeStyle = '#1E293B';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // Label
+            ctx.fillStyle = '#F87171';
+            ctx.font = '600 14px Inter, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('重心', cgX, STICK.y - 50);
+        }
+
+        function drawFingerAndForce(finger, forceRatio, label) {
+            const baseY = finger.y + 10;
+
+            // Draw Finger (Triangle pointing up)
+            const isSliding = finger.sliding;
+            ctx.fillStyle = isSliding ? '#F59E0B' : '#94A3B8'; // Amber if sliding, Slate if static
+
+            ctx.beginPath();
+            ctx.moveTo(finger.x, baseY);
+            ctx.lineTo(finger.x - 12, baseY + 24);
+            ctx.lineTo(finger.x + 12, baseY + 24);
+            ctx.fill();
+
+            // Finger base
+            ctx.beginPath();
+            ctx.roundRect(finger.x - 16, baseY + 24, 32, 10, 4);
+            ctx.fill();
+
+            // State Label (Sliding / Static)
+            ctx.fillStyle = isSliding ? '#FCD34D' : '#CBD5E1';
+            ctx.font = 'bold 12px Inter, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(isSliding ? '滑る' : '静止', finger.x, baseY + 50);
+
+            // Draw Normal Force (N) Vector
+            // Vector scales with forceRatio. Max length ~140px.
+            const vectorMaxLen = 140;
+            const vectorLen = forceRatio * vectorMaxLen;
+            const arrowStartY = baseY + 70 + vectorMaxLen;
+            const arrowEndY = arrowStartY - vectorLen;
+
+            if (vectorLen > 5) {
+                ctx.strokeStyle = '#3B82F6'; // Blue
+                ctx.fillStyle = '#3B82F6';
+                ctx.lineWidth = 6;
+                ctx.lineCap = 'round';
+
+                // Line
+                ctx.beginPath();
+                ctx.moveTo(finger.x, arrowStartY);
+                ctx.lineTo(finger.x, arrowEndY + 6); // Leave room for arrowhead
+                ctx.stroke();
+
+                // Arrowhead
+                ctx.beginPath();
+                ctx.moveTo(finger.x, arrowEndY);
+                ctx.lineTo(finger.x - 7, arrowEndY + 12);
+                ctx.lineTo(finger.x + 7, arrowEndY + 12);
+                ctx.fill();
+            }
+
+            // Force Value Text
+            ctx.fillStyle = '#93C5FD';
+            ctx.font = '500 13px Inter, sans-serif';
+            ctx.fillText(`抗力 N: ${(forceRatio * 100).toFixed(1)}%`, finger.x, arrowStartY + 20);
+        }
+
+        function gameLoop() {
+            if (isPlaying) {
+                updatePhysics();
+                draw();
+                animationId = requestAnimationFrame(gameLoop);
+            }
+        }
+
+        // Initial Draw on Load
+        window.onload = () => {
+            draw();
+        };
+
+    </script>
+</body>
+
+</html>

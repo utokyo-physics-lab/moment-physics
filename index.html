@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>モーメントと重心 - 物理学入門</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+    <div id="presentation-container">
+        
+        <!-- Slide 1: Title -->
+        <div class="slide">
+            <h1 class="title-text">小学生から始める物理学入門</h1>
+            <h2 class="subtitle-text">第3回：モーメントと重心</h2>
+        </div>
+
+        <!-- Slide 2: Goal -->
+        <div class="slide">
+            <div class="content-box">
+                <h2 class="heading-text">🎯 今日のゴール</h2>
+                <div class="list-item"><span>1️⃣</span> シーソーがつり合う理由を知る</div>
+                <div class="list-item"><span>2️⃣</span> <span class="highlight">「重心」</span> が何かを知る</div>
+                <div class="list-item"><span>3️⃣</span> 「つり合う場所で切ったら同じ重さ？」に挑戦</div>
+            </div>
+        </div>
+
+        <!-- Slide 3: Quiz 1 -->
+        <div class="slide">
+            <div class="content-box">
+                <h2 class="heading-text">🤔 クイズ 1</h2>
+                <p style="font-size: 2rem; font-weight: bold; text-align: center; color: #334155;">
+                    重い人と軽い人をシーソーでつり合わせるには、<br>重い人はどこに座ればよいでしょう？
+                </p>
+                <div class="quiz-options" style="margin: 2rem auto 0;">
+                    <div class="quiz-option">A. 遠くに座る</div>
+                    <div class="quiz-option">B. 動かない</div>
+                    <div class="quiz-option">C. 近くに座る</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 4: Sim 1 - Seesaw -->
+        <div class="slide">
+            <div class="iframe-container">
+                <iframe src="sim-seesaw.html"></iframe>
+            </div>
+        </div>
+
+        <!-- Slide 5: Explanation - Moment -->
+        <div class="slide">
+            <div class="content-box" style="text-align: center;">
+                <h2 class="heading-text">💡 てこの原理（モーメント）</h2>
+                <p style="font-size: 2.5rem; font-weight: 900; margin: 2rem 0; color: #4f46e5;">
+                    モーメント ＝ 回そうとする力の強さ
+                </p>
+                <div style="background: #f1f5f9; padding: 2rem; border-radius: 1rem; border: 4px dashed #94a3b8;">
+                    <p style="font-size: 3rem; font-weight: 900; color: #ec4899; margin: 0;">
+                        重さ × 中心からの距離
+                    </p>
+                </div>
+                <p style="font-size: 2rem; font-weight: bold; margin-top: 2rem; color: #334155;">
+                    重いだけでは？ 👉 <span style="color: #ec4899;">決まらない！</span><br>
+                    遠いと？ 👉 <span style="color: #ec4899;">強くなる！</span><br>
+                    近いと？ 👉 <span style="color: #ec4899;">弱くなる！</span>
+                </p>
+            </div>
+        </div>
+
+        <!-- Slide 6: Intro to Center of Gravity -->
+        <div class="slide">
+            <div class="content-box" style="text-align: center;">
+                <h2 class="heading-text">⚖️ 重心（じゅうしん）とは？</h2>
+                <div style="font-size: 2.2rem; font-weight: bold; color: #334155; line-height: 1.8; text-align: left; display: inline-block;">
+                    <p>✨ その物体の重さが、<span class="highlight">全部そこに集まっている</span>と考えられる点</p>
+                    <p style="margin-top: 2rem;">✨ そこで支えると、<span class="highlight">うまくつり合う場所</span></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 7: Quiz 2 -->
+        <div class="slide">
+            <div class="content-box">
+                <h2 class="heading-text">🧹 クイズ 2</h2>
+                <p style="font-size: 2.2rem; font-weight: bold; text-align: center; color: #334155; margin-bottom: 2rem;">
+                    形がバラバラな「ほうき」の重心はどうやって探す？
+                </p>
+                <div style="background: #fffbeb; padding: 2rem; border-radius: 1rem; text-align: center; border: 4px solid #fbbf24;">
+                    <p style="font-size: 2.5rem; font-weight: 900; color: #b45309; margin: 0;">
+                        形の真ん中 ≠ 重さの真ん中
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 8: Sim 2 - Broom -->
+        <div class="slide">
+            <div class="iframe-container">
+                <iframe src="sim-broom.html"></iframe>
+            </div>
+        </div>
+
+        <!-- Slide 9: Weapon Check -->
+        <div class="slide">
+            <div class="content-box">
+                <h2 class="heading-text">⚔️ 今日の武器</h2>
+                <div class="list-item" style="font-size: 2.5rem; padding: 1rem; background: #f8fafc; border-radius: 1rem; margin-bottom: 1rem;">
+                    <span>1️⃣</span> <span style="color: #4f46e5;">てこの原理：</span> 重さ × 距離
+                </div>
+                <div class="list-item" style="font-size: 2.5rem; padding: 1rem; background: #f8fafc; border-radius: 1rem;">
+                    <span>2️⃣</span> <span style="color: #ec4899;">重心：</span> そこで支えるとつり合う場所
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 10: Quiz 3 -->
+        <div class="slide">
+            <div class="content-box">
+                <h2 class="heading-text">🥕 最後のクイズ！</h2>
+                <p style="font-size: 2rem; font-weight: bold; text-align: center; color: #334155;">
+                    にんじんを「重心（つり合う場所）」で切ったら、<br>太い方と細い方、どっちが重い？
+                </p>
+                <div class="quiz-options" style="margin: 2rem auto 0;">
+                    <div class="quiz-option" style="border-color: #fca5a5;">A. 太い方が重い</div>
+                    <div class="quiz-option" style="border-color: #93c5fd;">B. 細い方が重い</div>
+                    <div class="quiz-option" style="border-color: #d8b4fe;">C. どちらも同じ重さ</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 11: Sim 3 - Carrot -->
+        <div class="slide">
+            <div class="iframe-container">
+                <iframe src="sim-carrot.html"></iframe>
+            </div>
+        </div>
+
+        <!-- Slide 12: Why? -->
+        <div class="slide">
+            <div class="content-box" style="text-align: center;">
+                <h2 class="heading-text">🤯 なぜそうなるの？</h2>
+                <div style="display: flex; justify-content: center; gap: 4rem; margin-bottom: 3rem;">
+                    <div style="background: #fee2e2; padding: 2rem; border-radius: 1rem; width: 300px;">
+                        <h3 style="color: #b91c1c; font-size: 2.5rem; margin-top: 0;">太い方</h3>
+                        <p style="font-size: 2rem; font-weight: bold; margin: 0;">重いけど、<br>支点に<span style="color: #ef4444;">近い</span></p>
+                    </div>
+                    <div style="font-size: 3rem; font-weight: 900; color: #94a3b8; display: flex; align-items: center;">VS</div>
+                    <div style="background: #dbeafe; padding: 2rem; border-radius: 1rem; width: 300px;">
+                        <h3 style="color: #1d4ed8; font-size: 2.5rem; margin-top: 0;">細い方</h3>
+                        <p style="font-size: 2rem; font-weight: bold; margin: 0;">軽いけど、<br>支点から<span style="color: #3b82f6;">遠い</span></p>
+                    </div>
+                </div>
+                <div style="background: #f1f5f9; padding: 1.5rem; border-radius: 1rem; border: 4px solid #cbd5e1; display: inline-block;">
+                    <p style="font-size: 2.5rem; font-weight: 900; color: #334155; margin: 0;">
+                        つり合う ≠ 左右の重さが同じ
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 13: Summary -->
+        <div class="slide">
+            <div class="content-box">
+                <h2 class="heading-text">🌟 今日のまとめ</h2>
+                <div class="list-item" style="font-size: 2.2rem; margin-bottom: 1.5rem;">
+                    <span>📌</span> シーソーは「重さ」だけで決まらない
+                </div>
+                <div class="list-item" style="font-size: 2.2rem; margin-bottom: 1.5rem;">
+                    <span>📌</span> 回そうとする強さは「<span class="highlight">重さ × 距離</span>」
+                </div>
+                <div class="list-item" style="font-size: 2.2rem;">
+                    <span>📌</span> 重心は「そこで支えると<span class="highlight">つり合う場所</span>」
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation Controls -->
+        <div class="controls">
+            <button id="prev-btn" class="control-btn">◀</button>
+            <button id="next-btn" class="control-btn">▶</button>
+        </div>
+
+        <!-- Progress Bar -->
+        <div id="progress" class="progress-bar" style="width: 0%;"></div>
+
+    </div>
+
+    <script src="js/slides.js"></script>
+</body>
+</html>
