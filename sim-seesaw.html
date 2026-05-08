@@ -76,7 +76,7 @@
         <!-- Header -->
         <div class="bg-gradient-to-r from-indigo-600 to-blue-600 text-white p-6 text-center shadow-inner">
             <h1 class="text-3xl font-extrabold tracking-tight drop-shadow-md">シーソーのつりあいシミュレーター</h1>
-            <p class="mt-2 text-indigo-100 font-medium text-lg">重さ × 距離 ＝ 回転する力（モーメント）</p>
+            <p class="mt-2 text-indigo-100 font-medium text-lg">どうすればつりあうか、いろいろ試してみよう！</p>
         </div>
 
         <!-- Control Bar (Simulation Start/Stop) -->
@@ -153,10 +153,6 @@
                     </div>
                 </div>
 
-                <div class="bg-blue-50 rounded-xl p-4 border border-blue-100">
-                    <div class="text-xs font-bold text-blue-400 mb-1 uppercase tracking-wider">左のモーメント (重さ × 距離)</div>
-                    <div id="momentA" class="text-2xl font-mono font-black text-blue-700">60 × 1.0 = 60.0</div>
-                </div>
             </div>
 
             <!-- Right Person (Red) -->
@@ -190,10 +186,6 @@
                     </div>
                 </div>
 
-                <div class="bg-red-50 rounded-xl p-4 border border-red-100">
-                    <div class="text-xs font-bold text-red-400 mb-1 uppercase tracking-wider">右のモーメント (重さ × 距離)</div>
-                    <div id="momentB" class="text-2xl font-mono font-black text-red-700">30 × 2.0 = 60.0</div>
-                </div>
             </div>
         </div>
 
@@ -201,7 +193,7 @@
         <div class="bg-indigo-50 p-6 md:p-8 border-t border-indigo-100 text-center">
             <p class="text-slate-700 font-medium leading-relaxed max-w-3xl mx-auto">
                 <span class="text-xl">💡</span>
-                重い人（左）が支点に近づき、軽い人（右）が支点から遠ざかることで、左右の<strong>「回転する力（モーメント）」</strong>が等しくなり、シーソーは水平につりあいます。スライダーを動かして、どんな組み合わせでつりあうか実験してみましょう！
+                重い人と軽い人を同時におろすとどうなるかな？スライダーで重さや位置を変えて、つりあう場所を探してみよう！
             </p>
         </div>
     </div>
@@ -353,8 +345,6 @@
             const momentA = state.massA * state.distA;
             const momentB = state.massB * state.distB;
 
-            document.getElementById('momentA').innerText = `${state.massA} × ${state.distA.toFixed(1)} = ${momentA.toFixed(1)}`;
-            document.getElementById('momentB').innerText = `${state.massB} × ${state.distB.toFixed(1)} = ${momentB.toFixed(1)}`;
 
             // Determine Status
             const diff = momentA - momentB;
