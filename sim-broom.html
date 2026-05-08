@@ -11,7 +11,8 @@
 
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f5f5f4; /* stone-100 */
+            background-color: #0f172a;
+            /* slate-900 */
         }
 
         canvas {
@@ -26,11 +27,11 @@
         }
 
         ::-webkit-scrollbar-track {
-            background: #e2e8f0;
+            background: #1e293b;
         }
 
         ::-webkit-scrollbar-thumb {
-            background: #94a3b8;
+            background: #475569;
             border-radius: 4px;
         }
 
@@ -40,12 +41,12 @@
     </style>
 </head>
 
-<body class="text-stone-800 min-h-screen flex flex-col items-center justify-center p-4">
-    <div class="max-w-4xl w-full bg-white rounded-2xl shadow-xl overflow-hidden border border-stone-200">
+<body class="text-slate-200 min-h-screen flex flex-col items-center justify-center p-4">
+    <div class="max-w-4xl w-full bg-slate-800 rounded-2xl shadow-2xl overflow-hidden border border-slate-700">
 
         <!-- Header & Explanation -->
-        <div class="p-6 md:p-8 border-b border-stone-200 bg-stone-50">
-            <h1 class="text-3xl font-bold mb-3 text-stone-800 flex items-center gap-3">
+        <div class="p-6 md:p-8 border-b border-slate-700 bg-slate-800/50">
+            <h1 class="text-3xl font-bold mb-3 text-white flex items-center gap-3">
                 <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                     class="text-amber-500">
@@ -55,20 +56,21 @@
                 </svg>
                 ほうきの重心を探す物理実験
             </h1>
-            <p class="text-stone-600 leading-relaxed text-lg font-medium">
-                スライダーで重心の位置を変えて、「再生」ボタンを押してみよう！<br>
-                左右の指は、どこで出会うかな？
+            <p class="text-slate-300 leading-relaxed text-sm md:text-base">
+                長い物体（ほうきなど）の両端を指で下から支え、ゆっくりと内側に寄せていきます。<br>
+                重心に近い方の指は<strong>垂直抗力が大きく（＝最大静止摩擦力が大きい）</strong>、遠い方の指は垂直抗力が小さくなります。<br>
+                摩擦力の限界が小さい方の指だけが先に滑るため、指は<strong>交互に滑りながら</strong>進み、最終的に必ず重心位置で合流します。
             </p>
         </div>
 
-        <div class="relative w-full overflow-x-auto bg-stone-100 flex justify-center py-8">
+        <div class="relative w-full overflow-x-auto bg-slate-900/50 flex justify-center py-8">
             <!-- Canvas resolution is set to 800x450, styled by CSS to fit container -->
             <canvas id="simCanvas" width="800" height="450"
-                class="rounded-lg shadow-[inset_0_2px_10px_rgba(0,0,0,0.1)] bg-white border border-stone-200"></canvas>
+                class="rounded-lg shadow-[inset_0_2px_10px_rgba(0,0,0,0.5)] bg-slate-900"></canvas>
         </div>
 
         <div
-            class="p-6 md:p-8 bg-white border-t border-stone-200 flex flex-col md:flex-row gap-8 items-center justify-between">
+            class="p-6 md:p-8 bg-slate-800 border-t border-slate-700 flex flex-col md:flex-row gap-8 items-center justify-between">
             <!-- Buttons -->
             <div class="flex items-center gap-4 w-full md:w-auto justify-center">
                 <button id="startBtn"
@@ -93,14 +95,14 @@
             <!-- Slider -->
             <div class="flex-1 w-full flex flex-col gap-3">
                 <div class="flex justify-between items-end">
-                    <label for="cgSlider" class="text-sm font-semibold text-stone-600">
+                    <label for="cgSlider" class="text-sm font-semibold text-slate-300">
                         重心の位置を設定 (左端からの割合)
                     </label>
-                    <span class="text-2xl font-bold text-amber-500 font-mono" id="cgValue">0.70</span>
+                    <span class="text-2xl font-bold text-amber-400 font-mono" id="cgValue">0.70</span>
                 </div>
                 <input type="range" id="cgSlider" min="0.15" max="0.85" step="0.01" value="0.7"
-                    class="w-full h-3 bg-stone-200 rounded-lg appearance-none cursor-pointer accent-amber-500">
-                <div class="flex justify-between text-xs text-stone-400 px-1 font-bold">
+                    class="w-full h-2 bg-slate-600 rounded-lg appearance-none cursor-pointer accent-amber-500">
+                <div class="flex justify-between text-xs text-slate-500 px-1">
                     <span>左寄り</span>
                     <span>中央</span>
                     <span>右寄り</span>
@@ -349,7 +351,7 @@
             ctx.fill();
 
             // State Label (Sliding / Static)
-            ctx.fillStyle = isSliding ? '#D97706' : '#64748B';
+            ctx.fillStyle = isSliding ? '#FCD34D' : '#CBD5E1';
             ctx.font = 'bold 12px Inter, sans-serif';
             ctx.textAlign = 'center';
             ctx.fillText(isSliding ? '滑る' : '静止', finger.x, baseY + 50);

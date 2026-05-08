@@ -142,49 +142,6 @@
             </div>
         </div>
 
-        <!-- Slide 6a: Apple Example -->
-        <div class="slide">
-            <div class="content-box" style="text-align: center;">
-                <h2 class="heading-text">🍎 いろんな物の「重心」</h2>
-                <div style="display: flex; justify-content: space-around; align-items: flex-end; margin-top: 4rem;">
-                    <!-- Apple -->
-                    <div style="position: relative;">
-                        <div style="font-size: 8rem;">🍎</div>
-                        <div style="position: absolute; top: 55%; left: 50%; transform: translate(-50%, -50%); width: 20px; height: 20px; background: #ef4444; border: 3px solid white; border-radius: 50%; box-shadow: 0 0 10px rgba(0,0,0,0.3);"></div>
-                        <p style="font-size: 1.8rem; font-weight: bold; margin-top: 1rem; color: #475569;">形が同じなら<br><span style="color: #ef4444;">ど真ん中！</span></p>
-                    </div>
-                    <!-- Baseball Bat -->
-                    <div style="position: relative;">
-                        <div style="font-size: 8rem; transform: rotate(45deg);">🏏</div>
-                        <div style="position: absolute; top: 30%; left: 65%; transform: translate(-50%, -50%); width: 20px; height: 20px; background: #3b82f6; border: 3px solid white; border-radius: 50%; box-shadow: 0 0 10px rgba(0,0,0,0.3);"></div>
-                        <p style="font-size: 1.8rem; font-weight: bold; margin-top: 1rem; color: #475569;">片方が重いと<br><span style="color: #3b82f6;">重い方にズレる！</span></p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Slide 6b: Benefit of Center of Gravity -->
-        <div class="slide">
-            <div class="content-box" style="text-align: center;">
-                <h2 class="heading-text">🤔 なぜ重心を考えるの？</h2>
-                <div style="background: #fffbeb; padding: 2rem; border-radius: 1.5rem; border: 4px solid #fbbf24; margin: 2rem auto; max-width: 700px;">
-                    <p style="font-size: 2.5rem; font-weight: 900; color: #d97706; margin: 0;">
-                        複雑な形でも「１つの点」として<br>計算できるから！
-                    </p>
-                </div>
-                <div style="display: flex; justify-content: center; align-items: center; gap: 2rem; margin-top: 3rem;">
-                    <div style="font-size: 6rem;">🚗</div>
-                    <div style="font-size: 3rem;">➡️</div>
-                    <div style="width: 30px; height: 30px; background: #10b981; border-radius: 50%; position: relative;">
-                        <span style="position: absolute; top: -30px; left: -20px; font-size: 1.5rem; font-weight: bold; white-space: nowrap; color: #047857;">1000kg</span>
-                    </div>
-                </div>
-                <p style="font-size: 1.8rem; font-weight: bold; margin-top: 2rem; color: #334155;">
-                    大きな車も、重さが全部集まった「点」だと思えば<br>てこの原理がカンタンに使えるんだ！
-                </p>
-            </div>
-        </div>
-
         <!-- Slide 7: Quiz 2 -->
         <div class="slide">
             <div class="content-box">
@@ -242,71 +199,24 @@
             </div>
         </div>
 
-        <!-- Slide 12: Why? (Skeleton) -->
+        <!-- Slide 12: Why? -->
         <div class="slide">
             <div class="content-box" style="text-align: center;">
-                <h2 class="heading-text">🤯 なぜそうなるの？（スケルトン）</h2>
-                <p style="font-size: 1.8rem; font-weight: bold; margin-bottom: 2rem; color: #334155;">
-                    にんじんを「太い方」と「細い方」に分けて、<br>それぞれの「重心」を見てみよう！
-                </p>
-                <div style="position: relative; width: 600px; height: 200px; margin: 0 auto; background: #fffbeb; border: 4px dashed #fbbf24; border-radius: 100px;">
-                    <!-- Carrot shape representation -->
-                    <div style="position: absolute; left: 50px; top: 50%; transform: translateY(-50%); width: 220px; height: 100px; background: rgba(239, 68, 68, 0.2); border-radius: 20px;"></div>
-                    <div style="position: absolute; right: 50px; top: 50%; transform: translateY(-50%); width: 280px; height: 50px; background: rgba(59, 130, 246, 0.2); border-radius: 20px;"></div>
-                    
-                    <!-- CG Points -->
-                    <!-- Thick part CG -->
-                    <div style="position: absolute; left: 160px; top: 50%; transform: translate(-50%, -50%); width: 24px; height: 24px; background: #ef4444; border: 3px solid white; border-radius: 50%;"></div>
-                    <div style="position: absolute; left: 160px; top: 20%; transform: translateX(-50%); font-weight: bold; color: #ef4444; font-size: 1.5rem;">太い方の重心</div>
-                    
-                    <!-- Thin part CG -->
-                    <div style="position: absolute; right: 190px; top: 50%; transform: translate(-50%, -50%); width: 24px; height: 24px; background: #3b82f6; border: 3px solid white; border-radius: 50%;"></div>
-                    <div style="position: absolute; right: 190px; top: 20%; transform: translateX(-50%); font-weight: bold; color: #3b82f6; font-size: 1.5rem;">細い方の重心</div>
-                    
-                    <!-- Whole CG (Fulcrum) -->
-                    <div style="position: absolute; left: 280px; top: 50%; transform: translate(-50%, -50%); width: 30px; height: 30px; background: #10b981; border: 4px solid white; border-radius: 50%; z-index: 10;"></div>
-                    <div style="position: absolute; left: 280px; top: 75%; transform: translateX(-50%); font-weight: bold; color: #10b981; font-size: 1.5rem;">全体の重心（支点）</div>
-                    
-                    <!-- Distance lines -->
-                    <div style="position: absolute; left: 160px; top: 60%; width: 120px; height: 4px; background: #475569;"></div>
-                    <div style="position: absolute; left: 220px; top: 65%; transform: translateX(-50%); font-weight: bold; color: #475569; font-size: 1.2rem;">近い</div>
-                    
-                    <div style="position: absolute; left: 280px; top: 60%; width: 130px; height: 4px; background: #475569;"></div>
-                    <div style="position: absolute; left: 345px; top: 65%; transform: translateX(-50%); font-weight: bold; color: #475569; font-size: 1.2rem;">遠い</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Slide 13: Why? (Balance Scale) -->
-        <div class="slide">
-            <div class="content-box" style="text-align: center;">
-                <h2 class="heading-text">⚖️ てんびんで考えると？</h2>
-                <div style="display: flex; justify-content: center; align-items: flex-end; gap: 2rem; margin-top: 2rem;">
-                    <div style="background: #fee2e2; padding: 2rem; border-radius: 1rem; width: 250px; border: 4px solid #fca5a5;">
+                <h2 class="heading-text">🤯 なぜそうなるの？</h2>
+                <div style="display: flex; justify-content: center; gap: 4rem; margin-bottom: 3rem;">
+                    <div style="background: #fee2e2; padding: 2rem; border-radius: 1rem; width: 300px;">
                         <h3 style="color: #b91c1c; font-size: 2.5rem; margin-top: 0;">太い方</h3>
-                        <div style="font-size: 5rem;">🏋️‍♂️</div>
-                        <p style="font-size: 1.8rem; font-weight: bold; margin: 1rem 0;">とても重い！</p>
-                        <p style="font-size: 1.5rem; color: #ef4444;">支点から<br><strong>近い</strong></p>
+                        <p style="font-size: 2rem; font-weight: bold; margin: 0;">重いけど、<br>支点に<span style="color: #ef4444;">近い</span></p>
                     </div>
-                    
-                    <div style="display: flex; flex-direction: column; align-items: center; margin-bottom: 2rem;">
-                        <div style="font-size: 3rem; font-weight: 900; color: #059669; background: #d1fae5; padding: 1rem 2rem; border-radius: 2rem; border: 4px solid #34d399;">
-                            つりあう！
-                        </div>
-                        <div style="font-size: 4rem; color: #94a3b8; margin-top: 1rem;">👇</div>
-                    </div>
-                    
-                    <div style="background: #dbeafe; padding: 2rem; border-radius: 1rem; width: 250px; border: 4px solid #93c5fd;">
+                    <div style="font-size: 3rem; font-weight: 900; color: #94a3b8; display: flex; align-items: center;">VS</div>
+                    <div style="background: #dbeafe; padding: 2rem; border-radius: 1rem; width: 300px;">
                         <h3 style="color: #1d4ed8; font-size: 2.5rem; margin-top: 0;">細い方</h3>
-                        <div style="font-size: 5rem;">🏃‍♂️</div>
-                        <p style="font-size: 1.8rem; font-weight: bold; margin: 1rem 0;">少し軽い！</p>
-                        <p style="font-size: 1.5rem; color: #3b82f6;">支点から<br><strong>遠い</strong></p>
+                        <p style="font-size: 2rem; font-weight: bold; margin: 0;">軽いけど、<br>支点から<span style="color: #3b82f6;">遠い</span></p>
                     </div>
                 </div>
-                
-                <div style="background: #f1f5f9; padding: 1.5rem; border-radius: 1rem; border: 4px dashed #cbd5e1; margin-top: 2rem; display: inline-block;">
+                <div style="background: #f1f5f9; padding: 1.5rem; border-radius: 1rem; border: 4px solid #cbd5e1; display: inline-block;">
                     <p style="font-size: 2.5rem; font-weight: 900; color: #334155; margin: 0;">
-                        重さ × <span style="color: #ef4444;">近い</span> ＝ 軽さ × <span style="color: #3b82f6;">遠い</span>
+                        つり合う ≠ 左右の重さが同じ
                     </p>
                 </div>
             </div>
