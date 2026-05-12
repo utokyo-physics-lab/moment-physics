@@ -231,6 +231,16 @@
         const canvas = document.getElementById('simCanvas');
         const ctx = canvas.getContext('2d');
 
+        // 高解像度（Retina）ディスプレイでの文字ぼやけを解消
+        const logicalWidth = 800;
+        const logicalHeight = 500;
+        const dpr = window.devicePixelRatio || 1;
+        canvas.style.width = logicalWidth + 'px';
+        canvas.style.maxWidth = '100%';
+        canvas.width = logicalWidth * dpr;
+        canvas.height = logicalHeight * dpr;
+        ctx.scale(dpr, dpr);
+
         // Helper function: Calculate drawing radius based on mass
         function getRadius(mass) {
             return 15 + Math.sqrt(mass) * 3.5;

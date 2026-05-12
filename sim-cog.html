@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>重心の可視化 - りんごと棒</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #ffffff;
+            color: #0f172a;
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Inter', sans-serif;
+        }
+        canvas {
+            display: block;
+            touch-action: none;
+        }
+        /* モード表示用のインジケーター */
+        .status-bar {
+            position: absolute;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 200px;
+            height: 4px;
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        .progress {
+            height: 100%;
+            background: #0ea5e9;
+            width: 0%;
+            transition: width 0.1s linear;
+        }
+    </style>
+</head>
+<body>
+
+<div class="status-bar">
+    <div id="progress" class="progress"></div>
+</div>
+
+<canvas id="canvas"></canvas>
+
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const progressEl = document.getElementById('progress');
+
+let width, height;
+let time = 0;
+let transitionFactor = 0; // 0: 実体, 1: スケルトン
+
+const config = {
+    appleColor: '#ef4444',
+    stickColor: '#94a3b8',
+    skeletonColor: '#0ea5e9',
+    cogColor: '#0f172a',
+    bgLineColor: 'rgba(0, 0, 0, 0.05)'
+};
+
+function resize() {
+    width = window.innerWidth;
+    height = window.innerHeight;
+    canvas.width = width * window.devicePixelRatio;
+    canvas.height = height * window.devicePixelRatio;
+    canvas.style.width = width + 'px';
+    canvas.style.height = height + 'px';
+    ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+}
+
+window.addEventListener('resize', resize);
+resize();
+
+function drawCircle(x, y, r, color, fill = true, dashed = false) {
+    ctx.beginPath();
+    if (dashed) ctx.setLineDash([5, 5]);
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    if (fill) {
+        ctx.fillStyle = color;
+        ctx.fill();
+    } else {
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+    }
+    ctx.setLineDash([]);
+}
+
+function drawLine(x1, y1, x2, y2, color, width = 1, dashed = false) {
+    ctx.beginPath();
+    if (dashed) ctx.setLineDash([5, 5]);
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
+    ctx.strokeStyle = color;
+    ctx.lineWidth = width;
+    ctx.stroke();
+    ctx.setLineDash([]);
+}
+
+function animate() {
+    time += 0.016; // 約60fps
+
+    // 周期的なフェーズ管理 (8秒サイクル)
+    // 0-3秒: 実体保持, 3-4秒: スケルトンへ, 4-7秒: スケルトン保持, 7-8秒: 実体へ
+    const cycle = (time % 8);
+    let target = 0;
+    
+    if (cycle < 3) {
+        target = 0;
+    } else if (cycle < 4) {
+        target = (cycle - 3); // transition up
+    } else if (cycle < 7) {
+        target = 1;
+    } else {
+        target = 1 - (cycle - 7); // transition down
+    }
+
+    // 滑らかな補間
+    transitionFactor += (target - transitionFactor) * 0.1;
+    
+    // プログレスバーの更新
+    progressEl.style.width = (cycle / 8 * 100) + '%';
+
+    ctx.clearRect(0, 0, width, height);
+
+    // 背景グリッド
+    ctx.beginPath();
+    for(let i = 0; i < width; i += 50) {
+        ctx.moveTo(i, 0); ctx.lineTo(i, height);
+    }
+    for(let i = 0; i < height; i += 50) {
+        ctx.moveTo(0, i); ctx.lineTo(width, i);
+    }
+    ctx.strokeStyle = config.bgLineColor;
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    const centerX = width / 2;
+    const centerY = height / 2;
+    const spacing = Math.min(width * 0.25, 300);
+
+    // --- 左側: りんご ---
+    const appleX = centerX - spacing;
+    const appleY = centerY;
+    const appleRadius = 60;
+
+    // 実体表示
+    ctx.globalAlpha = 1 - transitionFactor;
+    drawCircle(appleX, appleY, appleRadius, config.appleColor);
+    // ヘタ
+    ctx.fillStyle = '#4ade80';
+    ctx.fillRect(appleX - 3, appleY - appleRadius - 10, 6, 15);
+
+    // スケルトン表示
+    ctx.globalAlpha = transitionFactor;
+    drawCircle(appleX, appleY, appleRadius, config.skeletonColor, false, true);
+    drawCircle(appleX, appleY, 6, config.skeletonColor);
+
+    // 重心点（常に表示または強調）
+    ctx.globalAlpha = 1;
+    const pulse = 1 + Math.sin(time * 5) * 0.1;
+    drawCircle(appleX, appleY, 4 * pulse, config.cogColor);
+
+
+    // --- 右側: 棒 ---
+    const stickX = centerX + spacing;
+    const stickY = centerY;
+    const stickWidth = 200;
+    const stickHeight = 15;
+
+    // 実体表示
+    ctx.globalAlpha = 1 - transitionFactor;
+    ctx.fillStyle = config.stickColor;
+    ctx.beginPath();
+    ctx.roundRect(stickX - stickWidth/2, stickY - stickHeight/2, stickWidth, stickHeight, 4);
+    ctx.fill();
+
+    // スケルトン表示
+    ctx.globalAlpha = transitionFactor;
+    drawLine(stickX - stickWidth/2, stickY, stickX + stickWidth/2, stickY, config.skeletonColor, 2, true);
+    drawCircle(stickX, stickY, 6, config.skeletonColor);
+
+    // 重心点
+    ctx.globalAlpha = 1;
+    drawCircle(stickX, stickY, 4 * pulse, config.cogColor);
+
+    requestAnimationFrame(animate);
+}
+
+// 実行
+window.onload = animate;
+</script>
+</body>
+</html>

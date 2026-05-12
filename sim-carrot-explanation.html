@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>にんじんの重心とつり合い（修正版）</title>
+    <style>
+        :root {
+            --carrot-color: #ff8c00;
+            --main-cog-color: #000; /* 全体の重心（バランス点） */
+            --part-cog-color: #ff4500; /* 左右の重心 */
+            --bg-color: #fcfcfc;
+        }
+
+        body {
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: var(--bg-color);
+        }
+
+        .container {
+            position: relative;
+            width: 90vw;
+            max-width: 800px;
+            aspect-ratio: 16 / 9;
+        }
+
+        svg {
+            width: 100%;
+            height: 100%;
+            overflow: visible;
+        }
+
+        /* にんじん（水平・透明度高め） */
+        .carrot-body {
+            fill: var(--carrot-color);
+            fill-opacity: 0.15;
+            stroke: var(--carrot-color);
+            stroke-width: 2;
+            stroke-opacity: 0.3;
+        }
+
+        /* 各パーツの重心ポイント */
+        .cog-part {
+            fill: var(--part-cog-color);
+        }
+
+        /* 全体の重心（バランス点） */
+        .cog-total {
+            fill: var(--main-cog-color);
+        }
+
+        /* 補助線 */
+        .line-main {
+            stroke: #444;
+            stroke-width: 1.5;
+            opacity: 0.2;
+        }
+
+        .line-dist {
+            stroke: #666;
+            stroke-width: 1.5;
+            fill: none;
+        }
+
+        .marker-line {
+            stroke: #bbb;
+            stroke-width: 1;
+            stroke-dasharray: 4;
+        }
+
+        .arrow-head {
+            fill: #666;
+        }
+
+        .weight-arrow {
+            stroke: var(--part-cog-color);
+            stroke-width: 4;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <svg viewBox="0 0 800 450">
+        <!-- 矢印の定義 -->
+        <defs>
+            <marker id="arrow-end" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+                <path d="M0,0 L8,3 L0,6 Z" class="arrow-head" />
+            </marker>
+            <marker id="arrow-start" markerWidth="8" markerHeight="6" refX="0" refY="3" orient="auto">
+                <path d="M8,0 L0,3 L8,6 Z" class="arrow-head" />
+            </marker>
+            <marker id="weight-arrow-end" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+                <path d="M0,0 L8,3 L0,6 Z" fill="#ff4500" />
+            </marker>
+        </defs>
+
+        <!-- 水平なにんじん -->
+        <!-- 左端x=100, 全体重心x=330, 右端x=700 -->
+        <path class="carrot-body" d="M100,160 L700,212 L700,238 L100,290 Z" />
+
+        <!-- 3つの重心点（物理的に妥当な位置へ修正） -->
+        <!-- 左側の重心 (x=205) : 左の太い端寄り -->
+        <circle class="cog-part" cx="205" cy="225" r="7" />
+        
+        <!-- 全体の重心 (x=330) : 支点となる場所 -->
+        <circle class="cog-total" cx="330" cy="225" r="10" />
+
+        <!-- 右側の重心 (x=480) : 切り口(330)と先端(700)の間だが、太い切り口側に寄る -->
+        <circle class="cog-part" cx="480" cy="225" r="7" />
+
+        <!-- 垂直補助線 -->
+        <line class="marker-line" x1="205" y1="225" x2="205" y2="120" />
+        <line class="marker-line" x1="330" y1="225" x2="330" y2="120" />
+        <line class="marker-line" x1="480" y1="225" x2="480" y2="120" />
+
+        <!-- 距離を示す矢印 L1 (短い腕) -->
+        <!-- 330 - 205 = 125 units -->
+        <line class="line-dist" x1="215" y1="140" x2="320" y2="140" marker-start="url(#arrow-start)" marker-end="url(#arrow-end)" />
+        
+        <!-- 距離を示す矢印 L2 (長い腕) -->
+        <!-- 480 - 330 = 150 units -->
+        <line class="line-dist" x1="340" y1="140" x2="470" y2="140" marker-start="url(#arrow-start)" marker-end="url(#arrow-end)" />
+
+        <!-- 重さを示す下向き矢印（てこの原理：距離が短い方はより重い） -->
+        <!-- 左側：重い（矢印を長く） -->
+        <line class="weight-arrow" x1="205" y1="240" x2="205" y2="360" marker-end="url(#weight-arrow-end)" />
+        <!-- 右側：軽い（矢印を短く） -->
+        <line class="weight-arrow" x1="480" y1="240" x2="480" y2="300" marker-end="url(#weight-arrow-end)" />
+
+    </svg>
+</div>
+
+</body>
+</html>

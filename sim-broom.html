@@ -115,6 +115,17 @@
         // DOM Elements
         const canvas = document.getElementById('simCanvas');
         const ctx = canvas.getContext('2d');
+
+        // 高解像度（Retina）ディスプレイでの文字ぼやけを解消
+        const logicalWidth = 800;
+        const logicalHeight = 450;
+        const dpr = window.devicePixelRatio || 1;
+        canvas.style.width = logicalWidth + 'px';
+        canvas.style.maxWidth = '100%';
+        canvas.width = logicalWidth * dpr;
+        canvas.height = logicalHeight * dpr;
+        ctx.scale(dpr, dpr);
+
         const startBtn = document.getElementById('startBtn');
         const resetBtn = document.getElementById('resetBtn');
         const cgSlider = document.getElementById('cgSlider');
@@ -254,8 +265,17 @@
             let NL = totalDist > 0 ? (distR / totalDist) : 0.5;
             let NR = totalDist > 0 ? (distL / totalDist) : 0.5;
 
-            drawFingerAndForce(fingerL, NL, '左指');
-            drawFingerAndForce(fingerR, NR, '右指');
+            // 指同士が近づいた時に文字が重ならないようオフセットを計算
+            let textOffsetL = 0;
+            let textOffsetR = 0;
+            if (totalDist < 90) {
+                let overlap = 90 - totalDist;
+                textOffsetL = -overlap / 2;
+                textOffsetR = overlap / 2;
+            }
+
+            drawFingerAndForce(fingerL, NL, '左指', textOffsetL);
+            drawFingerAndForce(fingerR, NR, '右指', textOffsetR);
         }
 
         function drawBroom() {
@@ -332,7 +352,7 @@
             ctx.fillText('重心', cgX, STICK.y - 50);
         }
 
-        function drawFingerAndForce(finger, forceRatio, label) {
+        function drawFingerAndForce(finger, forceRatio, label, textOffsetX = 0) {
             const baseY = finger.y + 10;
 
             // Draw Finger (Triangle pointing up)
@@ -354,7 +374,7 @@
             ctx.fillStyle = isSliding ? '#FCD34D' : '#CBD5E1';
             ctx.font = 'bold 12px Inter, sans-serif';
             ctx.textAlign = 'center';
-            ctx.fillText(isSliding ? '滑る' : '静止', finger.x, baseY + 50);
+            ctx.fillText(isSliding ? '滑る' : '静止', finger.x + textOffsetX, baseY + 50);
 
             // Draw Normal Force (N) Vector
             // Vector scales with forceRatio. Max length ~140px.
@@ -386,7 +406,7 @@
             // Force Value Text
             ctx.fillStyle = '#93C5FD';
             ctx.font = '500 13px Inter, sans-serif';
-            ctx.fillText(`抗力 N: ${(forceRatio * 100).toFixed(1)}%`, finger.x, arrowStartY + 20);
+            ctx.fillText(`抗力 N: ${(forceRatio * 100).toFixed(1)}%`, finger.x + textOffsetX, arrowStartY + 20);
         }
 
         function gameLoop() {

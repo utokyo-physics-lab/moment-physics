@@ -142,6 +142,13 @@
             </div>
         </div>
 
+        <!-- Slide 6.5: Sim - Center of Gravity Visualization -->
+        <div class="slide">
+            <div class="iframe-container">
+                <iframe src="sim-cog.html"></iframe>
+            </div>
+        </div>
+
         <!-- Slide 7: Quiz 2 -->
         <div class="slide">
             <div class="content-box">
@@ -222,6 +229,13 @@
             </div>
         </div>
 
+        <!-- Slide 12.5: Sim 4 - Carrot Explanation -->
+        <div class="slide">
+            <div class="iframe-container">
+                <iframe src="sim-carrot-explanation.html"></iframe>
+            </div>
+        </div>
+
         <!-- Slide 13: Summary -->
         <div class="slide">
             <div class="content-box">
@@ -238,6 +252,50 @@
             </div>
         </div>
 
+        <!-- Slide 14: Final Quiz 1 -->
+        <div class="slide">
+            <div class="content-box">
+                <h2 class="heading-text" style="margin-bottom: 1rem;">📝 さいごの小テスト (1/2)</h2>
+                
+                <div style="background: #fffbeb; padding: 2rem; border-radius: 1rem; border: 3px solid #fbbf24;">
+                    <p style="font-size: 2.2rem; font-weight: bold; color: #334155; margin-top: 0; margin-bottom: 1.5rem; text-align: center;">
+                        第1問：物を「回転させようとする力」のことを何という？
+                    </p>
+                    <div class="quiz-options" style="margin-top: 0; flex-direction: row; gap: 1rem; max-width: 100%;">
+                        <button class="quiz-option" style="flex: 1; padding: 1rem; font-size: 1.5rem; cursor: pointer;" onclick="checkAnswer(this, false, 'ざんねん！スピードは「速さ」のことだよ。正解は「モーメント」です。')">A. スピード</button>
+                        <button class="quiz-option" style="flex: 1; padding: 1rem; font-size: 1.5rem; cursor: pointer;" onclick="checkAnswer(this, true, '大正解！シーソーを回そうとする力は「重さ × 距離」で計算でき、これをモーメントと呼びます！')">B. モーメント</button>
+                        <button class="quiz-option" style="flex: 1; padding: 1rem; font-size: 1.5rem; cursor: pointer;" onclick="checkAnswer(this, false, 'ざんねん！パワーではないよ。正解は「モーメント」です。')">C. パワー</button>
+                    </div>
+                    <div class="quiz-feedback" style="display: none; margin-top: 1.5rem; padding: 1rem; border-radius: 0.5rem; text-align: center;">
+                        <div class="feedback-result" style="font-size: 2rem; font-weight: bold; margin-bottom: 0.5rem;"></div>
+                        <div class="feedback-explanation" style="font-size: 1.3rem; color: #475569; font-weight: bold;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 15: Final Quiz 2 -->
+        <div class="slide">
+            <div class="content-box">
+                <h2 class="heading-text" style="margin-bottom: 1rem;">📝 さいごの小テスト (2/2)</h2>
+
+                <div style="background: #eff6ff; padding: 2rem; border-radius: 1rem; border: 3px solid #60a5fa;">
+                    <p style="font-size: 2.2rem; font-weight: bold; color: #334155; margin-top: 0; margin-bottom: 1.5rem; text-align: center;">
+                        第2問：そこで支えると「ピタッとつり合う場所」のことを何という？
+                    </p>
+                    <div class="quiz-options" style="margin-top: 0; flex-direction: row; gap: 1rem; max-width: 100%;">
+                        <button class="quiz-option" style="flex: 1; padding: 1rem; font-size: 1.5rem; cursor: pointer;" onclick="checkAnswer(this, false, 'ざんねん！「中心（形）」と「重心（重さ）」は違う場所になることがあるよ。')">A. 中心</button>
+                        <button class="quiz-option" style="flex: 1; padding: 1rem; font-size: 1.5rem; cursor: pointer;" onclick="checkAnswer(this, false, 'ざんねん！にんじんのように形がいびつな物は、真ん中ではつり合わないよ。')">B. 真ん中</button>
+                        <button class="quiz-option" style="flex: 1; padding: 1rem; font-size: 1.5rem; cursor: pointer;" onclick="checkAnswer(this, true, '大正解！重さが全部集まっていると考えられる「重心」で支えればつり合います！')">C. 重心</button>
+                    </div>
+                    <div class="quiz-feedback" style="display: none; margin-top: 1.5rem; padding: 1rem; border-radius: 0.5rem; text-align: center;">
+                        <div class="feedback-result" style="font-size: 2rem; font-weight: bold; margin-bottom: 0.5rem;"></div>
+                        <div class="feedback-explanation" style="font-size: 1.3rem; color: #475569; font-weight: bold;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Navigation Controls -->
         <div class="controls">
             <button id="prev-btn" class="control-btn">◀</button>
@@ -249,6 +307,51 @@
 
     </div>
 
+    <script>
+        function checkAnswer(btn, isCorrect, explanationText) {
+            const container = btn.parentElement;
+            const buttons = container.querySelectorAll('button.quiz-option');
+            
+            // 何度でもクリックできるように、まず全ボタンの状態をリセット
+            buttons.forEach(b => {
+                b.style.backgroundColor = '';
+                b.style.borderColor = '';
+                b.style.color = '';
+                b.style.opacity = '1';
+            });
+
+            // クリックされたボタンの色を変更
+            if (isCorrect) {
+                btn.style.backgroundColor = '#dcfce7';
+                btn.style.borderColor = '#22c55e';
+                btn.style.color = '#166534';
+            } else {
+                btn.style.backgroundColor = '#fee2e2';
+                btn.style.borderColor = '#ef4444';
+                btn.style.color = '#991b1b';
+            }
+
+            // 解説を表示
+            const feedback = container.nextElementSibling;
+            feedback.style.display = 'block';
+            
+            const resultEl = feedback.querySelector('.feedback-result');
+            const explanationEl = feedback.querySelector('.feedback-explanation');
+            
+            if (isCorrect) {
+                resultEl.innerText = '🎉 正解！';
+                resultEl.style.color = '#16a34a';
+                feedback.style.backgroundColor = '#f0fdf4';
+                feedback.style.border = '2px solid #bbf7d0';
+            } else {
+                resultEl.innerText = '❌ 不正解...';
+                resultEl.style.color = '#dc2626';
+                feedback.style.backgroundColor = '#fef2f2';
+                feedback.style.border = '2px solid #fecaca';
+            }
+            explanationEl.innerText = explanationText;
+        }
+    </script>
     <script src="js/slides.js"></script>
 </body>
 </html>
